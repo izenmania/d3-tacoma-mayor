@@ -1,0 +1,9 @@
+.line {
+	fill: none;
+	stroke-width: 1.5px;
+	stroke: blue;
+}
+
+.axis-label {
+	font-weight: bold;
+}
