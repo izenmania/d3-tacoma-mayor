@@ -109,7 +109,7 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 						return y(last) + 4;
 					})
 					.attr("fill", function(d) { return col(d); })
-					.style("font-size", 10);
+					.style("font-size", "10px");
 
 	// Fiddling with putting a marker on the highest single month of each.
 	// candidatesEnter.append("circle")
@@ -146,7 +146,7 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 		.attr("text-anchor", "middle")
 		.style("fill", "white")
 		.style("background-color", "blue")
-		.style("font-size", 10);
+		.style("font-size", "10px");
 
 	// ADDITIONAL NOTES
 
