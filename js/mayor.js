@@ -1,6 +1,6 @@
-var height = 500;
-var width = 800;
-var margin = { top: 30, right: 60, bottom: 80, left: 60 };
+var height = 600;
+var width = 1000;
+var margin = { top: 30, right: 160, bottom: 150, left: 60 };
 var figWidth = width - margin.left - margin.right;
 var figHeight = height - margin.top - margin.bottom;
 var maxY = 30000;
@@ -111,6 +111,18 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 					.attr("fill", function(d) { return col(d); })
 					.style("font-size", 10);
 
+	// Fiddling with putting a marker on the highest single month of each.
+	// candidatesEnter.append("circle")
+	// 					.attr("r", 3)
+	// 					.attr("cx", 100)
+	// 					.attr("cy", function(d) {
+	// 						var max = d3.max(monthlyNested, function(mn) {
+	// 							return mn.value[d]
+	// 						});
+	// 						return y(max);
+	// 					})
+	// 					.attr("fill", function(d) { return col(d); });
+
 	// PRIMARY LINE
 	g.append("line")
 		.attr("x1", x(primary))
@@ -136,10 +148,93 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 		.style("background-color", "blue")
 		.style("font-size", 10);
 
+	// ADDITIONAL NOTES
+
+	var noteY = figHeight+margin.top+70;
+	var notePad = 7;
+
+	var woodDate = new Date("2016-12-01 00:00:00");
+	var woodText = g.append("text")
+		.attr("x", x(woodDate))
+		.attr("y", noteY)
+		.attr("class", "plotnote")
+		.attr("id", "woodNote");
+	woodText.append("tspan")
+		.text("Victoria Woodards's early entry into the");
+	woodText.append("tspan")
+		.text("race provided a fundraising advantage,")
+		.attr("x", x(woodDate))
+		.attr("dy", 12);
+	woodText.append("tspan")
+		.text("which she has not relinquished.")
+		.attr("x", x(woodDate))
+		.attr("dy", 12);
+
+	var woodBbox = woodText.node().getBBox();
+	g.insert("rect", "#woodNote")
+		.attr("x", woodBbox.x-notePad)
+		.attr("y", woodBbox.y-notePad)
+		.attr("width", woodBbox.width+notePad*2)
+		.attr("height", woodBbox.height+notePad*2)
+		.style("fill", col("WOODARDS"));
+
+
+	var lopDate = new Date("2017-04-01 00:00:00");
+	var lopText = g.append("text")
+		.attr("x", x(lopDate))
+		.attr("y", noteY)
+		.attr("class", "plotnote")
+		.attr("id", "lopezNote");
+	lopText.append("tspan")
+		.text("Evelyn Lopez entered the race late,");
+	lopText.append("tspan")
+		.text("never caught up in fundraising, and")
+		.attr("x", x(lopDate))
+		.attr("dy", 12);
+	lopText.append("tspan")
+		.text("did not progress past the primary.")
+		.attr("x", x(lopDate))
+		.attr("dy", 12);
+
+	var lopBbox = lopText.node().getBBox();
+	g.insert("rect", "#lopezNote")
+		.attr("x", lopBbox.x-notePad)
+		.attr("y", lopBbox.y-notePad)
+		.attr("width", lopBbox.width+notePad*2)
+		.attr("height", lopBbox.height+notePad*2)
+		.style("fill", col("LOPEZ"));
+
+
+	var bothDate = new Date("2017-07-01 00:00:00");
+	var bothText = g.append("text")
+		.attr("x", x(bothDate))
+		.attr("y", noteY)
+		.attr("class", "plotnote")
+		.attr("id", "bothNote");
+	bothText.append("tspan")
+		.text("The two major candidates saw a donation");
+	bothText.append("tspan")
+		.text("spike just before the primary, followed by a ")
+		.attr("x", x(bothDate))
+		.attr("dy", 12);
+	bothText.append("tspan")
+		.text("drop while the votes were counted.")
+		.attr("x", x(bothDate))
+		.attr("dy", 12);
+
+	var bothBbox = bothText.node().getBBox();
+	g.insert("rect", "#bothNote")
+		.attr("x", bothBbox.x-notePad)
+		.attr("y", bothBbox.y-notePad)
+		.attr("width", bothBbox.width+notePad*2)
+		.attr("height", bothBbox.height+notePad*2)
+		.style("fill", "red");
+		
+
 	// PLOT LABELS
 	g.append("text")
 		.text("Tacoma Mayoral Candidates :: Donations by Month")
-		.attr("x", width/2)
+		.attr("x", margin.left + figWidth/2)
 		.attr("text-anchor", "middle")
 		.style("font-weight", "bold")
 		.style("font-size", 18);
@@ -154,8 +249,8 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 
 	g.append("text")
 		.text("Month")
-		.attr("x", width/2)
-		.attr("y", height-(margin.bottom/2))
+		.attr("x", margin.left + figWidth/2)
+		.attr("y", figHeight+margin.top+40)
 		.attr("text-anchor", "middle")
 		.attr("class", "axis-label");
 
