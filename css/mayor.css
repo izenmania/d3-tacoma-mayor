@@ -37,8 +37,18 @@ h3 {
 	width: 220px;
 	padding: 7px;
 	text-align: center;
+}
+
+#form.out {
 	border-top: 3px solid #999;
 	border-left: 3px solid #999;
 	border-right: 3px solid #333;
 	border-bottom: 3px solid #333;
+}
+
+#form.in {
+	border-bottom: 3px solid #999;
+	border-right: 3px solid #999;
+	border-left: 3px solid #333;
+	border-top: 3px solid #333;
 }

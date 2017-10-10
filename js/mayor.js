@@ -1,15 +1,19 @@
 var my_viz_lib = my_viz_lib || {};
 
 my_viz_lib.mayorPlot = function() {
+	// Initial positional parameters
 	var height = 600;
 	var width = 1000;
 	var margin = { top: 10, right: 160, bottom: 150, left: 60 };
 	var figWidth = width - margin.left - margin.right;
 	var figHeight = height - margin.top - margin.bottom;
 	var maxY = 30000;
+	// Keys for later lookup into the data
 	var names = ["MERRITT", "WOODARDS", "LOPEZ"];
+	// Accesor function for the bisector
 	var bisectDate = d3.bisector(function(d) { return d.key; }).left;
 
+	// Externally set the data
 	var data = [];
 	var data_ = function(_) {
 		var that = this;
@@ -18,6 +22,7 @@ my_viz_lib.mayorPlot = function() {
 		return that;
 	}
 
+	// Externally set the max of the Y axis
 	var maxY_ = function(_) {
 		var that = this;
 		if(!arguments.length) return data;
@@ -25,11 +30,12 @@ my_viz_lib.mayorPlot = function() {
 		return that;
 	}
 
-
+	// Configure scales
 	var x = d3.scaleTime().range([margin.left, figWidth]);
 	var y = d3.scaleLinear().range([margin.top, margin.top+figHeight]);
 	var col = d3.scaleOrdinal(d3.schemeCategory10);
 
+	// Build a line for a single candidate
 	function makeLine(lastName) {
 		return d3.line()
 				.y(function(d) { return y(d.value[lastName]); })
@@ -38,20 +44,26 @@ my_viz_lib.mayorPlot = function() {
 	}
 
 
-
+	// Draw the main plot
 	function plot_() {
+		// If the plot already exists, clear it out
 		d3.selectAll("svg").remove()
+
+		// Create the base svg
 		var svg = d3.select("body").append("svg")
 						.attr("height", height)
 						.attr("width", width)
 
-
+		// Create the inner g element for the plot
 		var g = svg.append("g")
 					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		// Use the provided data to set the x and y domains
 		x.domain(d3.extent(data, function(d) { return d.key; }));
 		y.domain([maxY, 0]);
 		col.domain(names);
 
+		// The vertical line to highlight the mouse location
 		var overlayLine = svg.append("line")
 			.attr("class", "overlayLine")
 			.attr("x1", x.range()[0]+margin.left)
@@ -63,6 +75,7 @@ my_viz_lib.mayorPlot = function() {
 			.attr("opacity", "0.25")
 			.style("display", "none");
 
+		// General overlay to host mouse events
 		var overlay = svg.append("rect")
 			.attr("class", "overlay")
 			.attr("width", figWidth-margin.left)
@@ -80,23 +93,12 @@ my_viz_lib.mayorPlot = function() {
 			})
 			.on('mousemove', vertical);
 
-		// var woodStat = svg.append("text")
-		// 	.attr("fill", col("WOODARDS"))
-		// 	.style("font-size", "10px")
-		// 	.attr("text-anchor", "middle");
-		// var merrittStat = svg.append("text")
-		// 	.attr("fill", col("MERRITT"))
-		// 	.style("font-size", "10px")
-		// 	.attr("text-anchor", "middle");
-		// var lopStat = svg.append("text")
-		// 	.attr("fill", col("LOPEZ"))
-		// 	.style("font-size", "10px")
-		// 	.attr("text-anchor", "middle");
-
+		// Elements for dollar values displayed on hover
 		var stats = svg.selectAll(".stats")
 			.data(names)
 			.enter();
 
+		// Bounding box of these values
 		var statsBox = stats
 			.append("rect")
 			.attr("class", "statsBox")
@@ -105,6 +107,7 @@ my_viz_lib.mayorPlot = function() {
 			.attr("fill", function(d) { return col(d); })
 			.style("display", "none");
 
+		// The actual text elements of the values
 		var statsText = stats
 			.append("text")
 			.attr("id", function(d) { return d; })
@@ -115,8 +118,9 @@ my_viz_lib.mayorPlot = function() {
 			.text("Testing")
 			.style("display", "none");
 
-
+		// Callback function for mouse movement over the plot
 		function vertical() {
+			// Monetary formating
 			var fmt = function(d) {
 				if(d) {
 					return "$" + d3.format(",.2f")(d);
@@ -124,22 +128,32 @@ my_viz_lib.mayorPlot = function() {
 					return "";
 				}
 			};
+
+			// Get the current mouse position
 			coords = d3.mouse(this)
 
+			// Set the x value of the mouse in terms of the plot
 			var xVal = x.range()[0] + margin.left+coords[0];
+
+			// Find the effective date of the current x value, from the x scale
 			var xDate = x.invert(coords[0]+margin.left);
+
+			// Get the nearest surrounding points
 			var i = bisectDate(data, xDate, 1),
 				d0 = data[i-1],
 				d1 = data[i];
 
+			// Determine which of the surrounding points is nearest to the mouse location
 			var nearest = xDate - d0.key > d1.key - xDate ? i : i-1;
 			var nearDate = data[nearest].key;
 
+			// Reposition and change content of the dollar value
 			statsText
 				.attr("x", x(nearDate)+margin.left)
 				.attr("y", function(d) { return y(data[nearest].value[d])+margin.top; })
 				.text(function(d) { return fmt(data[nearest].value[d]); });
 
+			// Reposition the bounding box at the same time
 			statsBox
 				.attr("x", x(nearDate)+margin.left-30)
 				.attr("y", function(d) { return y(data[nearest].value[d])+margin.top-13; })
@@ -152,23 +166,25 @@ my_viz_lib.mayorPlot = function() {
 				});
 				
 
-
+			// Reposition the highlight line
 			overlayLine
 				.attr("x1", x(nearDate)+margin.left)
 				.attr("x2", x(nearDate)+margin.left);
 		}
 
+		// Create the axes
 		var xAxis = d3.axisBottom().scale(x);
 		var yAxis = d3.axisLeft().scale(y).ticks(5);
 
+		// Initialize the lines
 		var candidates = g.selectAll(".candidate")
 							.data(names);
-
 		var candidatesEnter = candidates.enter()
 					.append("g")
 					.attr("class", "city")
 					.attr("id", function(d) { return d; });
 
+		// Draw lines for each candidate
 		candidatesEnter.append("path")
 						//.attr("class", "line")
 						.attr("d", function(d) { return makeLine(d)(data); })
@@ -176,7 +192,6 @@ my_viz_lib.mayorPlot = function() {
 						.attr("stroke-width", 2.5)
 						.attr("fill", "none");
 
-		var primary = new Date("2017-08-01 00:00:00");
 		candidatesEnter.append("text")
 						.text(function(d) { return d; })
 						.attr("x", function(d) {
@@ -198,7 +213,8 @@ my_viz_lib.mayorPlot = function() {
 						.attr("fill", function(d) { return col(d); })
 						.style("font-size", "10px");
 
-		// PRIMARY LINE
+		// Static vertical marker for the primary election
+		var primary = new Date("2017-08-01 00:00:00");
 		g.append("line")
 			.attr("x1", x(primary))
 			.attr("y1", y(0))
@@ -223,8 +239,7 @@ my_viz_lib.mayorPlot = function() {
 			.style("background-color", "blue")
 			.style("font-size", "10px");
 
-		// ADDITIONAL NOTES
-
+		// Static notes displayed below the plot, with bounding boxes
 		var noteY = figHeight+margin.top+70;
 		var notePad = 7;
 
@@ -306,14 +321,7 @@ my_viz_lib.mayorPlot = function() {
 			.style("fill", "red");
 			
 
-		// PLOT LABELS
-		// g.append("text")
-		// 	.text("Tacoma Mayoral Candidates :: Donations by Month")
-		// 	.attr("x", margin.left + figWidth/2)
-		// 	.attr("text-anchor", "middle")
-		// 	.style("font-weight", "bold")
-		// 	.style("font-size", 18);
-
+		// Axis labels
 		g.append("text")
 			.text("Dollars Donated")
 			.attr("x", 0-(figHeight/2)-margin.top)
@@ -329,7 +337,7 @@ my_viz_lib.mayorPlot = function() {
 			.attr("text-anchor", "middle")
 			.attr("class", "axis-label");
 
-		// AXES
+		// Display axes
 		g.append("g")
 			.attr("class", "axis")
 			.attr("transform", "translate(0, "+(margin.top + figHeight)+")")
@@ -341,6 +349,7 @@ my_viz_lib.mayorPlot = function() {
 			.call(yAxis);
 	}
 
+	// Expose public functions
 	var public = {
 		"plot": plot_,
 		"data": data_,
@@ -351,7 +360,7 @@ my_viz_lib.mayorPlot = function() {
 };
 
 
-
+// Convert rows from strings to useable data formats
 var rowConverter = function(d) {
 	var timeParse = d3.timeParse("%m/%d/%Y %H:%M:%S %p")
 
@@ -362,10 +371,9 @@ var rowConverter = function(d) {
 	};
 }
 
-
+// Load the data file
 d3.csv("data/monthly.csv", rowConverter, function(monthly) {
-	//console.log(monthly[0]["receiptDate"]);
-	// Data processing
+	// Process the data from long to wide format
 	var monthlyNested = d3.nest()
 					.key(function(d) { return new Date(d["receiptDate"]); })
 					.rollup(function(d) {
@@ -377,7 +385,7 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 					})
 					.entries(monthly);
 
-
+	// Reprocess the data from long to wide, while converting the amounts to cumulative sums
 	var monthlyNestedCumulative = d3.nest()
 					.key(function(d) { return new Date(d["receiptDate"]); })
 					.rollup(function(d) {
@@ -389,6 +397,7 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 					})
 					.entries(monthly);
 
+	// Sort 
 	monthlyNested.forEach(function(d) { d.key = new Date(d.key); });
 	monthlyNested.sort(function(a, b) { return a.key - b.key; });
 	monthlyNestedCumulative.forEach(function(d) { d.key = new Date(d.key); });
@@ -403,20 +412,6 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 			monthlyNestedCumulative[i].value["LOPEZ"] = monthlyNestedCumulative[i].value["LOPEZ"] + monthlyNestedCumulative[i-1].value["LOPEZ"];
 	}
 
-
-	// for(var i = 0; i < monthlyNested.length; i++) {
-
-	// 	if(i > 0) {
-	// 		if(monthlyNested[i-1].value["WOODARDS"])
-	// 			monthlyNested[i].value["WOODARDS"] = monthlyNested[i].value["WOODARDS"] + monthlyNested[i-1].value["WOODARDS"];
-	// 		if(monthlyNested[i-1].value["MERRITT"])
-	// 			monthlyNestedCum[i].value["MERRITT"] = monthlyNested[i].value["MERRITT"] + monthlyNested[i-1].value["MERRITT"];
-	// 		if(monthlyNested[i-1].value["LOPEZ"])
-	// 			monthlyNestedCum[i].value["LOPEZ"] = monthlyNested[i].value["LOPEZ"] + monthlyNested[i-1].value["LOPEZ"];
-	// 	} else {
-	// 		//monthlyNested[i]
-	// 	}
-	// }
 	console.log(monthlyNestedCumulative);
 	
 
@@ -440,6 +435,12 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 			}
 			cumulativeFlag = !cumulativeFlag;
 			myMayor.plot();
+		})
+		.on("mousedown", function() {
+			d3.select("#form").attr("class", "in");
+		})
+		.on("mouseup", function() {
+			d3.select("#form").attr("class", "out");
 		});
 	
 });
