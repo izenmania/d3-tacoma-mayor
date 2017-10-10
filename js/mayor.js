@@ -57,7 +57,7 @@ my_viz_lib.mayorPlot = function() {
 			.attr("x1", x.range()[0]+margin.left)
 			.attr("y1", y(0)+margin.top)
 			.attr("x2", x.range()[0]+margin.left)
-			.attr("y2", y(maxY)+margin.top)
+			.attr("y2", y(maxY)+margin.top+7)
 			.attr("stroke-width", 10)
 			.attr("stroke", "gray")
 			.attr("opacity", "0.25")
@@ -287,7 +287,7 @@ my_viz_lib.mayorPlot = function() {
 			.attr("class", "plotnote")
 			.attr("id", "bothNote");
 		bothText.append("tspan")
-			.text("The two major candidates saw a donation");
+			.text("The two other candidates saw a donation");
 		bothText.append("tspan")
 			.text("spike just before the primary, followed by a ")
 			.attr("x", x(bothDate))
