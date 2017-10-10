@@ -18,6 +18,13 @@ my_viz_lib.mayorPlot = function() {
 		return that;
 	}
 
+	var maxY_ = function(_) {
+		var that = this;
+		if(!arguments.length) return data;
+		maxY = _;
+		return that;
+	}
+
 
 	var x = d3.scaleTime().range([margin.left, figWidth]);
 	var y = d3.scaleLinear().range([margin.top, margin.top+figHeight]);
@@ -33,6 +40,7 @@ my_viz_lib.mayorPlot = function() {
 
 
 	function plot_() {
+		d3.selectAll("svg").remove()
 		var svg = d3.select("body").append("svg")
 						.attr("height", height)
 						.attr("width", width)
@@ -44,47 +52,74 @@ my_viz_lib.mayorPlot = function() {
 		y.domain([maxY, 0]);
 		col.domain(names);
 
+		var buttons = svg.append("rect")
+			.attr("width", 100)
+			.attr("height", 30)
+			.attr("transform", "translate("+(2*margin.left)+","+(2*margin.top)+")")
+			.attr("fill", "black");
+
 		var overlayLine = svg.append("line")
+			.attr("class", "overlayLine")
 			.attr("x1", x.range()[0]+margin.left)
 			.attr("y1", y(0)+margin.top)
 			.attr("x2", x.range()[0]+margin.left)
 			.attr("y2", y(maxY)+margin.top)
 			.attr("stroke-width", 10)
 			.attr("stroke", "gray")
-			.attr("opacity", "0.25");
+			.attr("opacity", "0.25")
+			.style("display", "none");
 
 		var overlay = svg.append("rect")
 			.attr("class", "overlay")
 			.attr("width", figWidth-margin.left)
 			.attr("height", figHeight)
 			.attr("transform", "translate("+(2*margin.left)+","+(2*margin.top)+")")
-			.on("mouseover", function() { overlayLine.style("display", null); })
-			.on("mouseout", function() { overlayLine.style("display", "none"); })
+			.on("mouseover", function() {
+				overlayLine.style("display", "inline");
+				statsBox.style("display", "inline");
+				statsText.style("display", "inline");
+			})
+			.on("mouseout", function() {
+				overlayLine.style("display", "none");
+				statsBox.style("display", "none");
+				statsText.style("display", "none");
+			})
 			.on('mousemove', vertical);
 
-		var stats = svg.append("text")
-			.attr("class", "stats")
-			.attr("x", 2*margin.left+20)
-			.attr("y", 2*margin.top+20);
-		var woodStat = stats.append("tspan")
-			.text("0")
-			.attr("x", 2*margin.left+20)
-			//.attr("dy", 12);
-			.attr("fill", col("WOODARDS"))
-			.style("font-size", "10px");
-		var merrittStat = stats.append("tspan")
-			.text("0")
-			.attr("x", 2*margin.left+20)
-			.attr("dy", 12)
-			.attr("fill", col("MERRITT"))
-			.style("font-size", "10px");
-		var lopStat = stats.append("tspan")
-			.text("0")
-			.attr("x", 2*margin.left+20)
-			.attr("dy", 12)
-			.attr("fill", col("LOPEZ"))
-			.style("font-size", "10px");
+		// var woodStat = svg.append("text")
+		// 	.attr("fill", col("WOODARDS"))
+		// 	.style("font-size", "10px")
+		// 	.attr("text-anchor", "middle");
+		// var merrittStat = svg.append("text")
+		// 	.attr("fill", col("MERRITT"))
+		// 	.style("font-size", "10px")
+		// 	.attr("text-anchor", "middle");
+		// var lopStat = svg.append("text")
+		// 	.attr("fill", col("LOPEZ"))
+		// 	.style("font-size", "10px")
+		// 	.attr("text-anchor", "middle");
 
+		var stats = svg.selectAll(".stats")
+			.data(names)
+			.enter();
+
+		var statsBox = stats
+			.append("rect")
+			.attr("class", "statsBox")
+			.attr("width", 60)
+			.attr("height", 20)
+			.attr("fill", function(d) { return col(d); })
+			.style("display", "none");
+
+		var statsText = stats
+			.append("text")
+			.attr("id", function(d) { return d; })
+			.attr("class", "statsText")
+			.style("font-size", "10px")
+			.attr("text-anchor", "middle")
+			.attr("fill", "white")
+			.text("Testing")
+			.style("display", "none");
 
 
 		function vertical() {
@@ -106,10 +141,32 @@ my_viz_lib.mayorPlot = function() {
 			var nearest = xDate - d0.key > d1.key - xDate ? i : i-1;
 			var nearDate = data[nearest].key;
 
-			woodStat.text(fmt(data[nearest].value["WOODARDS"]));
-			merrittStat.text(fmt(data[nearest].value["MERRITT"]));
-			lopStat.text(fmt(data[nearest].value["LOPEZ"]));
-			console.log(data[nearest]);
+			// woodStat.text(fmt(data[nearest].value["WOODARDS"]))
+			// 	.attr("x", x(nearDate)+margin.left)
+			// 	.attr("y", y(data[nearest].value["WOODARDS"])+margin.top-10);
+			// merrittStat.text(fmt(data[nearest].value["MERRITT"]))
+			// 	.attr("x", x(nearDate)+margin.left)
+			// 	.attr("y", y(data[nearest].value["MERRITT"])+margin.top-10);
+			// lopStat.text(fmt(data[nearest].value["LOPEZ"]))
+			// 	.attr("x", x(nearDate)+margin.left)
+			// 	.attr("y", y(data[nearest].value["LOPEZ"])+margin.top-10);
+			//console.log(data[nearest]);
+			statsText
+				.attr("x", x(nearDate)+margin.left)
+				.attr("y", function(d) { return y(data[nearest].value[d])+margin.top; })
+				.text(function(d) { return fmt(data[nearest].value[d]); });
+
+			statsBox
+				.attr("x", x(nearDate)+margin.left-30)
+				.attr("y", function(d) { return y(data[nearest].value[d])+margin.top-13; })
+				.style("display", function(d) {
+					if(data[nearest].value[d]) {
+						return "inline";
+					} else {
+						return "none";
+					}
+				});
+				
 
 
 			overlayLine
@@ -302,7 +359,8 @@ my_viz_lib.mayorPlot = function() {
 
 	var public = {
 		"plot": plot_,
-		"data": data_
+		"data": data_,
+		"maxY": maxY_
 	};
 
 	return public;
@@ -335,16 +393,52 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 					})
 					.entries(monthly);
 
+
+	var monthlyNestedCumulative = d3.nest()
+					.key(function(d) { return new Date(d["receiptDate"]); })
+					.rollup(function(d) {
+						return d.reduce(function(prev, curr) {
+							prev["receiptDate"] = curr["receiptDate"];
+							prev[curr["lastName"]] = curr["amount"];
+							return prev;
+						}, {});
+					})
+					.entries(monthly);
+
 	monthlyNested.forEach(function(d) { d.key = new Date(d.key); });
-	//console.log(monthlyNested.sort(function(a, b) { return new Date(a.key) - new Date(b.key); }));
-	//monthlyNested.sort(function(a, b) { return new Date(a.key) - new Date(b.key); });
 	monthlyNested.sort(function(a, b) { return a.key - b.key; });
+	monthlyNestedCumulative.forEach(function(d) { d.key = new Date(d.key); });
+	monthlyNestedCumulative.sort(function(a, b) { return a.key - b.key; });
+
+	for(var i = 1; i < monthlyNestedCumulative.length; i++) {
+		if(monthlyNestedCumulative[i-1].value["WOODARDS"])
+			monthlyNestedCumulative[i].value["WOODARDS"] = monthlyNestedCumulative[i].value["WOODARDS"] + monthlyNestedCumulative[i-1].value["WOODARDS"];
+		if(monthlyNestedCumulative[i-1].value["MERRITT"])
+			monthlyNestedCumulative[i].value["MERRITT"] = monthlyNestedCumulative[i].value["MERRITT"] + monthlyNestedCumulative[i-1].value["MERRITT"];
+		if(monthlyNestedCumulative[i-1].value["LOPEZ"])
+			monthlyNestedCumulative[i].value["LOPEZ"] = monthlyNestedCumulative[i].value["LOPEZ"] + monthlyNestedCumulative[i-1].value["LOPEZ"];
+	}
+
+
+	// for(var i = 0; i < monthlyNested.length; i++) {
+
+	// 	if(i > 0) {
+	// 		if(monthlyNested[i-1].value["WOODARDS"])
+	// 			monthlyNested[i].value["WOODARDS"] = monthlyNested[i].value["WOODARDS"] + monthlyNested[i-1].value["WOODARDS"];
+	// 		if(monthlyNested[i-1].value["MERRITT"])
+	// 			monthlyNestedCum[i].value["MERRITT"] = monthlyNested[i].value["MERRITT"] + monthlyNested[i-1].value["MERRITT"];
+	// 		if(monthlyNested[i-1].value["LOPEZ"])
+	// 			monthlyNestedCum[i].value["LOPEZ"] = monthlyNested[i].value["LOPEZ"] + monthlyNested[i-1].value["LOPEZ"];
+	// 	} else {
+	// 		//monthlyNested[i]
+	// 	}
+	// }
+	console.log(monthlyNestedCumulative);
 	
-	console.log(monthlyNested.filter(function(d) { return d.value["LOPEZ"] > 0; }));
 
 
 	var myMayor = my_viz_lib.mayorPlot();
-	myMayor.data(monthlyNested);
+	myMayor.data(monthlyNestedCumulative).maxY(140000);
 	myMayor.plot();
 
 	

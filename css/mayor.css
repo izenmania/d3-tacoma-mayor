@@ -17,3 +17,7 @@
 	fill: none;
 	pointer-events: all;
 }
+
+.overlayLine, .statsBox, .statsText {
+	display: none;
+}
