@@ -3,7 +3,7 @@ var my_viz_lib = my_viz_lib || {};
 my_viz_lib.mayorPlot = function() {
 	var height = 600;
 	var width = 1000;
-	var margin = { top: 30, right: 160, bottom: 150, left: 60 };
+	var margin = { top: 10, right: 160, bottom: 150, left: 60 };
 	var figWidth = width - margin.left - margin.right;
 	var figHeight = height - margin.top - margin.bottom;
 	var maxY = 30000;
@@ -51,12 +51,6 @@ my_viz_lib.mayorPlot = function() {
 		x.domain(d3.extent(data, function(d) { return d.key; }));
 		y.domain([maxY, 0]);
 		col.domain(names);
-
-		var buttons = svg.append("rect")
-			.attr("width", 100)
-			.attr("height", 30)
-			.attr("transform", "translate("+(2*margin.left)+","+(2*margin.top)+")")
-			.attr("fill", "black");
 
 		var overlayLine = svg.append("line")
 			.attr("class", "overlayLine")
@@ -141,16 +135,6 @@ my_viz_lib.mayorPlot = function() {
 			var nearest = xDate - d0.key > d1.key - xDate ? i : i-1;
 			var nearDate = data[nearest].key;
 
-			// woodStat.text(fmt(data[nearest].value["WOODARDS"]))
-			// 	.attr("x", x(nearDate)+margin.left)
-			// 	.attr("y", y(data[nearest].value["WOODARDS"])+margin.top-10);
-			// merrittStat.text(fmt(data[nearest].value["MERRITT"]))
-			// 	.attr("x", x(nearDate)+margin.left)
-			// 	.attr("y", y(data[nearest].value["MERRITT"])+margin.top-10);
-			// lopStat.text(fmt(data[nearest].value["LOPEZ"]))
-			// 	.attr("x", x(nearDate)+margin.left)
-			// 	.attr("y", y(data[nearest].value["LOPEZ"])+margin.top-10);
-			//console.log(data[nearest]);
 			statsText
 				.attr("x", x(nearDate)+margin.left)
 				.attr("y", function(d) { return y(data[nearest].value[d])+margin.top; })
@@ -323,12 +307,12 @@ my_viz_lib.mayorPlot = function() {
 			
 
 		// PLOT LABELS
-		g.append("text")
-			.text("Tacoma Mayoral Candidates :: Donations by Month")
-			.attr("x", margin.left + figWidth/2)
-			.attr("text-anchor", "middle")
-			.style("font-weight", "bold")
-			.style("font-size", 18);
+		// g.append("text")
+		// 	.text("Tacoma Mayoral Candidates :: Donations by Month")
+		// 	.attr("x", margin.left + figWidth/2)
+		// 	.attr("text-anchor", "middle")
+		// 	.style("font-weight", "bold")
+		// 	.style("font-size", 18);
 
 		g.append("text")
 			.text("Dollars Donated")
@@ -441,5 +425,21 @@ d3.csv("data/monthly.csv", rowConverter, function(monthly) {
 	myMayor.data(monthlyNestedCumulative).maxY(140000);
 	myMayor.plot();
 
+	var cumulativeFlag = true;
+
+	d3.select("#form")
+		.on("click", function() {
+			if(cumulativeFlag) {
+				myMayor.data(monthlyNested).maxY(30000);
+				d3.select("#form").text("Click to view cumulative totals.");
+				d3.select("#type").text("Monthly");
+			} else {
+				myMayor.data(monthlyNestedCumulative).maxY(140000);
+				d3.select("#form").text("Click to view monthly totals.");
+				d3.select("#type").text("Cumulative");
+			}
+			cumulativeFlag = !cumulativeFlag;
+			myMayor.plot();
+		});
 	
 });
